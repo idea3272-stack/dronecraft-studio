@@ -1,9 +1,17 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import { CartItem, Drone, DroneCustomization } from "@/types/drone";
+import { Drone } from "@/types/drone";
+import { ExtendedCustomization } from "@/data/drones";
+
+interface CartItem {
+  drone: Drone;
+  customization: ExtendedCustomization;
+  quantity: number;
+  totalPrice: number;
+}
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (drone: Drone, customization: DroneCustomization) => void;
+  addToCart: (drone: Drone, customization: ExtendedCustomization) => void;
   removeFromCart: (index: number) => void;
   updateQuantity: (index: number, quantity: number) => void;
   clearCart: () => void;
@@ -16,17 +24,14 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  const calculateItemPrice = (drone: Drone, customization: DroneCustomization) => {
+  const calculateItemPrice = (drone: Drone, customization: ExtendedCustomization) => {
     return (
       drone.basePrice +
-      customization.camera.price +
-      customization.battery.price +
-      customization.propeller.price +
-      customization.sensor.price
+      Object.values(customization).reduce((sum, item) => sum + item.price, 0)
     );
   };
 
-  const addToCart = (drone: Drone, customization: DroneCustomization) => {
+  const addToCart = (drone: Drone, customization: ExtendedCustomization) => {
     const totalPrice = calculateItemPrice(drone, customization);
     setItems((prev) => [
       ...prev,

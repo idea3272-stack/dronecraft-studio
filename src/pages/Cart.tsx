@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
+import { categoryLabels, ExtendedCustomization } from "@/data/drones";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -35,9 +36,9 @@ export default function CartPage() {
           >
             <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <h2 className="font-display text-xl font-bold mb-2">ตะกร้าของคุณว่างเปล่า</h2>
-            <p className="text-muted-foreground mb-6">เลือกซื้อโดรนที่คุณต้องการได้เลย</p>
-            <Link to="/products">
-              <Button variant="hero">เลือกซื้อโดรน</Button>
+            <p className="text-muted-foreground mb-6">เริ่มสร้างโดรนในแบบของคุณได้เลย</p>
+            <Link to="/customize/skytech-custom">
+              <Button variant="hero">สร้างโดรนของคุณ</Button>
             </Link>
           </motion.div>
         ) : (
@@ -50,60 +51,69 @@ export default function CartPage() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="glass rounded-2xl p-4 flex gap-4"
+                  className="glass rounded-2xl p-4"
                 >
-                  <img
-                    src={item.drone.image}
-                    alt={item.drone.name}
-                    className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-xl"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-display font-bold">{item.drone.name}</h3>
-                        <p className="text-sm text-muted-foreground">{item.drone.category}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeFromCart(index)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    {/* Customizations */}
-                    <div className="mt-2 text-xs text-muted-foreground space-y-1">
-                      <p>กล้อง: {item.customization.camera.name}</p>
-                      <p>แบตเตอรี่: {item.customization.battery.name}</p>
-                      <p>ใบพัด: {item.customization.propeller.name}</p>
-                      <p>เซนเซอร์: {item.customization.sensor.name}</p>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                  <div className="flex gap-4">
+                    <img
+                      src={item.drone.image}
+                      alt={item.drone.name}
+                      className="w-24 h-24 md:w-32 md:h-32 object-cover rounded-xl flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-display font-bold">{item.drone.name}</h3>
+                          <p className="text-sm text-muted-foreground">Build Your Own Drone</p>
+                        </div>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateQuantity(index, item.quantity - 1)}
+                          onClick={() => removeFromCart(index)}
+                          className="text-destructive hover:text-destructive flex-shrink-0"
                         >
-                          <Minus className="h-3 w-3" />
-                        </Button>
-                        <span className="w-8 text-center font-medium">{item.quantity}</span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => updateQuantity(index, item.quantity + 1)}
-                        >
-                          <Plus className="h-3 w-3" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                      <span className="font-display font-bold text-primary">
-                        ฿{formatPrice(item.totalPrice)}
-                      </span>
+
+                      {/* Customizations - Scrollable */}
+                      <div className="mt-2 max-h-24 overflow-y-auto">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                          {(Object.keys(item.customization) as (keyof ExtendedCustomization)[]).map((key) => {
+                            const custom = item.customization[key];
+                            if (custom.price === 0 && custom.name.includes("ไม่")) return null;
+                            return (
+                              <p key={key} className="truncate">
+                                {categoryLabels[key]}: {custom.name.split('(')[0].trim()}
+                              </p>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(index, item.quantity - 1)}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(index, item.quantity + 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <span className="font-display font-bold text-primary">
+                          ฿{formatPrice(item.totalPrice)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
