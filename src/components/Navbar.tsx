@@ -12,7 +12,7 @@ export function Navbar() {
 
   const navLinks = [
     { name: "หน้าแรก", path: "/" },
-    { name: "สินค้า", path: "/products" },
+    { name: "สร้างโดรน", path: "/customize/skytech-custom" },
     { name: "เกี่ยวกับเรา", path: "/about" },
   ];
 

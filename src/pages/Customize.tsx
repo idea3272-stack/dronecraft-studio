@@ -1,147 +1,110 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
-import { drones, customizationOptions, defaultCustomization } from "@/data/drones";
-import { DroneCustomization } from "@/types/drone";
+import { 
+  baseDrone, 
+  customizationOptions, 
+  defaultCustomization, 
+  categoryLabels, 
+  categoryIcons,
+  ExtendedCustomization 
+} from "@/data/drones";
+
+type CategoryKey = keyof ExtendedCustomization;
 
 export default function CustomizePage() {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toast } = useToast();
+  
+  const [customization, setCustomization] = useState<ExtendedCustomization>(defaultCustomization);
+  const [expandedCategory, setExpandedCategory] = useState<CategoryKey | null>("frame");
 
-  const drone = drones.find((d) => d.id === id);
-  const [customization, setCustomization] = useState<DroneCustomization>(defaultCustomization);
-
-  if (!drone) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>ไม่พบสินค้า</p>
-      </div>
-    );
-  }
-
-  const totalPrice =
-    drone.basePrice +
-    customization.camera.price +
-    customization.battery.price +
-    customization.propeller.price +
-    customization.sensor.price;
+  const calculateTotalPrice = () => {
+    return baseDrone.basePrice + Object.values(customization).reduce((sum, item) => sum + item.price, 0);
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("th-TH").format(price);
   };
 
   const handleAddToCart = () => {
-    addToCart(drone, customization);
+    addToCart(baseDrone, customization as any);
     toast({
       title: "เพิ่มสินค้าแล้ว!",
-      description: `${drone.name} ถูกเพิ่มลงในตะกร้าสินค้า`,
+      description: "SKYTECH Custom ถูกเพิ่มลงในตะกร้าสินค้า",
     });
   };
 
-  const CustomizationSection = ({
-    title,
-    options,
-    selected,
-    onSelect,
-    field,
-  }: {
-    title: string;
-    options: { id: string; name: string; price: number }[];
-    selected: { id: string; name: string; price: number };
-    onSelect: (option: { id: string; name: string; price: number }) => void;
-    field: keyof DroneCustomization;
-  }) => (
-    <div className="mb-6">
-      <h3 className="font-display font-bold mb-3">{title}</h3>
-      <div className="space-y-2">
-        {options.map((option) => (
-          <button
-            key={option.id}
-            onClick={() => onSelect(option)}
-            className={`w-full p-4 rounded-xl border transition-all text-left flex items-center justify-between ${
-              selected.id === option.id
-                ? "border-primary bg-primary/10"
-                : "border-border hover:border-primary/50 bg-card"
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                  selected.id === option.id ? "border-primary bg-primary" : "border-muted-foreground"
-                }`}
-              >
-                {selected.id === option.id && <Check className="h-3 w-3 text-primary-foreground" />}
-              </div>
-              <span className="font-medium">{option.name}</span>
-            </div>
-            <span className={`text-sm ${option.price > 0 ? "text-primary" : "text-muted-foreground"}`}>
-              {option.price > 0 ? `+฿${formatPrice(option.price)}` : "รวมในราคา"}
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+  const toggleCategory = (category: CategoryKey) => {
+    setExpandedCategory(expandedCategory === category ? null : category);
+  };
+
+  const categories = Object.keys(customizationOptions) as CategoryKey[];
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="container mx-auto px-4 pt-24 pb-12">
-        {/* Back Button */}
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
+        {/* Header */}
+        <Button variant="ghost" onClick={() => navigate("/")} className="mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
           กลับ
         </Button>
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Left - Image Preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <span className="inline-block mb-4 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10">
+            <span className="text-sm text-primary font-medium">🛠️ Build Your Own Drone</span>
+          </span>
+          <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">
+            สร้างโดรน<span className="gradient-text">ในแบบของคุณ</span>
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            เลือกอุปกรณ์ทุกชิ้นด้วยตัวเอง ปรับแต่งให้ตรงกับความต้องการ ตั้งแต่เฟรม มอเตอร์ กล้อง ไปจนถึงอุปกรณ์เสริมต่างๆ
+          </p>
+        </motion.div>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left - Drone Preview */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            className="relative"
+            className="lg:col-span-1"
           >
-            <div className="sticky top-24">
+            <div className="sticky top-24 space-y-6">
               <div className="aspect-square rounded-3xl overflow-hidden glass">
                 <img
-                  src={drone.image}
-                  alt={drone.name}
+                  src={baseDrone.image}
+                  alt={baseDrone.name}
                   className="w-full h-full object-cover"
                 />
               </div>
 
-              {/* Specs */}
-              <div className="mt-6 p-6 rounded-2xl glass">
-                <h3 className="font-display font-bold mb-4">สเปค</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">กล้อง</span>
-                    <p className="font-medium">{drone.specs.camera}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">แบตเตอรี่</span>
-                    <p className="font-medium">{drone.specs.battery}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">เวลาบิน</span>
-                    <p className="font-medium">{drone.specs.flightTime}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">ระยะบิน</span>
-                    <p className="font-medium">{drone.specs.range}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">ความเร็ว</span>
-                    <p className="font-medium">{drone.specs.speed}</p>
-                  </div>
+              {/* Selected Summary */}
+              <div className="p-4 rounded-2xl glass">
+                <h3 className="font-display font-bold mb-3 text-sm">สรุปการเลือก</h3>
+                <div className="space-y-1.5 text-xs max-h-48 overflow-y-auto">
+                  {categories.map((cat) => (
+                    <div key={cat} className="flex justify-between items-center">
+                      <span className="text-muted-foreground truncate mr-2">
+                        {categoryIcons[cat]} {categoryLabels[cat]}
+                      </span>
+                      <span className="text-foreground truncate text-right flex-1">
+                        {customization[cat].name.split('(')[0].trim()}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -151,94 +114,132 @@ export default function CustomizePage() {
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
+            className="lg:col-span-2 space-y-3"
           >
-            <div className="mb-6">
-              <span className="text-sm text-primary font-medium">{drone.category}</span>
-              <h1 className="font-display text-3xl md:text-4xl font-bold mt-2">
-                {drone.name}
-              </h1>
-              <p className="text-muted-foreground mt-2">{drone.description}</p>
-            </div>
+            {categories.map((category, index) => {
+              const options = customizationOptions[category];
+              const selected = customization[category];
+              const isExpanded = expandedCategory === category;
 
-            <div className="p-6 rounded-2xl glass mb-8">
-              <CustomizationSection
-                title="กล้อง"
-                options={customizationOptions.camera}
-                selected={customization.camera}
-                onSelect={(opt) => setCustomization({ ...customization, camera: opt })}
-                field="camera"
-              />
+              return (
+                <motion.div
+                  key={category}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="glass rounded-2xl overflow-hidden"
+                >
+                  {/* Category Header */}
+                  <button
+                    onClick={() => toggleCategory(category)}
+                    className="w-full p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">{categoryIcons[category]}</span>
+                      <div className="text-left">
+                        <h3 className="font-display font-bold">{categoryLabels[category]}</h3>
+                        <p className="text-sm text-muted-foreground">{selected.name}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {selected.price > 0 && (
+                        <span className="text-sm text-primary font-medium">
+                          +฿{formatPrice(selected.price)}
+                        </span>
+                      )}
+                      {isExpanded ? (
+                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </button>
 
-              <CustomizationSection
-                title="แบตเตอรี่"
-                options={customizationOptions.battery}
-                selected={customization.battery}
-                onSelect={(opt) => setCustomization({ ...customization, battery: opt })}
-                field="battery"
-              />
-
-              <CustomizationSection
-                title="ใบพัด"
-                options={customizationOptions.propeller}
-                selected={customization.propeller}
-                onSelect={(opt) => setCustomization({ ...customization, propeller: opt })}
-                field="propeller"
-              />
-
-              <CustomizationSection
-                title="เซนเซอร์เสริม"
-                options={customizationOptions.sensor}
-                selected={customization.sensor}
-                onSelect={(opt) => setCustomization({ ...customization, sensor: opt })}
-                field="sensor"
-              />
-            </div>
-
-            {/* Price Summary */}
-            <div className="p-6 rounded-2xl glass sticky bottom-4">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-muted-foreground">ราคาเริ่มต้น</span>
-                <span>฿{formatPrice(drone.basePrice)}</span>
-              </div>
-              {customization.camera.price > 0 && (
-                <div className="flex items-center justify-between mb-2 text-sm">
-                  <span className="text-muted-foreground">{customization.camera.name}</span>
-                  <span className="text-primary">+฿{formatPrice(customization.camera.price)}</span>
-                </div>
-              )}
-              {customization.battery.price > 0 && (
-                <div className="flex items-center justify-between mb-2 text-sm">
-                  <span className="text-muted-foreground">{customization.battery.name}</span>
-                  <span className="text-primary">+฿{formatPrice(customization.battery.price)}</span>
-                </div>
-              )}
-              {customization.propeller.price > 0 && (
-                <div className="flex items-center justify-between mb-2 text-sm">
-                  <span className="text-muted-foreground">{customization.propeller.name}</span>
-                  <span className="text-primary">+฿{formatPrice(customization.propeller.price)}</span>
-                </div>
-              )}
-              {customization.sensor.price > 0 && (
-                <div className="flex items-center justify-between mb-2 text-sm">
-                  <span className="text-muted-foreground">{customization.sensor.name}</span>
-                  <span className="text-primary">+฿{formatPrice(customization.sensor.price)}</span>
-                </div>
-              )}
-              <div className="border-t border-border pt-4 mt-4">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="font-display font-bold text-lg">ราคารวม</span>
-                  <span className="font-display font-bold text-2xl text-primary">
-                    ฿{formatPrice(totalPrice)}
-                  </span>
-                </div>
-                <Button variant="hero" size="lg" className="w-full" onClick={handleAddToCart}>
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  เพิ่มลงตะกร้า
-                </Button>
-              </div>
-            </div>
+                  {/* Options */}
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="border-t border-border"
+                      >
+                        <div className="p-4 space-y-2">
+                          {options.map((option) => (
+                            <button
+                              key={option.id}
+                              onClick={() => setCustomization({ ...customization, [category]: option })}
+                              className={`w-full p-3 rounded-xl border transition-all text-left flex items-start gap-3 ${
+                                selected.id === option.id
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border hover:border-primary/50 bg-card/50"
+                              }`}
+                            >
+                              <div
+                                className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                  selected.id === option.id
+                                    ? "border-primary bg-primary"
+                                    : "border-muted-foreground"
+                                }`}
+                              >
+                                {selected.id === option.id && (
+                                  <Check className="h-3 w-3 text-primary-foreground" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium text-sm">{option.name}</span>
+                                  <span
+                                    className={`text-sm flex-shrink-0 ${
+                                      option.price > 0 ? "text-primary" : "text-muted-foreground"
+                                    }`}
+                                  >
+                                    {option.price > 0 ? `+฿${formatPrice(option.price)}` : "รวมในราคา"}
+                                  </span>
+                                </div>
+                                {option.description && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {option.description}
+                                  </p>
+                                )}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              );
+            })}
           </motion.div>
         </div>
+
+        {/* Sticky Price Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-0 left-0 right-0 glass border-t border-border z-40"
+        >
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <span className="text-sm text-muted-foreground">ราคารวมทั้งหมด</span>
+                <p className="font-display text-2xl md:text-3xl font-bold text-primary">
+                  ฿{formatPrice(calculateTotalPrice())}
+                </p>
+              </div>
+              <Button variant="hero" size="lg" onClick={handleAddToCart} className="flex-shrink-0">
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                เพิ่มลงตะกร้า
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Spacer for sticky bar */}
+        <div className="h-24" />
       </main>
 
       <Footer />

@@ -1,8 +1,15 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play, Wrench, Cpu, Camera, Battery, Gauge, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import heroDrone from "@/assets/hero-drone.jpg";
+
+const features = [
+  { icon: Wrench, label: "13 หมวดหมู่" },
+  { icon: Cpu, label: "50+ ตัวเลือก" },
+  { icon: Camera, label: "กล้อง 8K" },
+  { icon: Battery, label: "55 นาที" },
+];
 
 export function HeroSection() {
   return (
@@ -38,25 +45,25 @@ export function HeroSection() {
               className="inline-block mb-4 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10"
             >
               <span className="text-sm text-primary font-medium">
-                🚀 โดรนรุ่นใหม่ล่าสุด 2024
+                🛠️ Build Your Own Drone
               </span>
             </motion.div>
 
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              ยกระดับการบิน
+              สร้างโดรน
               <br />
-              <span className="gradient-text">สู่ความเป็นมืออาชีพ</span>
+              <span className="gradient-text">ในแบบของคุณ</span>
             </h1>
 
             <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0">
-              สัมผัสประสบการณ์การบินโดรนที่เหนือระดับ ด้วยเทคโนโลยีล้ำสมัย 
-              กล้องคุณภาพสูง และระบบควบคุมที่แม่นยำ
+              ปรับแต่งโดรนทุกชิ้นส่วนด้วยตัวเอง เลือกเฟรม มอเตอร์ กล้อง Gimbal GPS 
+              และอุปกรณ์เสริมอีกมากมาย ให้ตรงกับการใช้งานของคุณ
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link to="/products">
+              <Link to="/customize/skytech-custom">
                 <Button variant="hero" size="xl">
-                  เลือกซื้อโดรน
+                  เริ่มสร้างโดรน
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
@@ -66,23 +73,20 @@ export function HeroSection() {
               </Button>
             </div>
 
-            {/* Stats */}
+            {/* Quick Features */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-border"
+              className="flex flex-wrap gap-4 mt-12 pt-8 border-t border-border justify-center lg:justify-start"
             >
-              {[
-                { value: "50+", label: "รุ่นโดรน" },
-                { value: "10K+", label: "ลูกค้า" },
-                { value: "24/7", label: "ซัพพอร์ต" },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center lg:text-left">
-                  <div className="font-display text-2xl md:text-3xl font-bold text-primary">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+              {features.map((feature) => (
+                <div
+                  key={feature.label}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/50"
+                >
+                  <feature.icon className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">{feature.label}</span>
                 </div>
               ))}
             </motion.div>
@@ -102,11 +106,39 @@ export function HeroSection() {
               {/* Drone Image */}
               <motion.img
                 src={heroDrone}
-                alt="Featured Drone"
-                className="relative z-10 w-full max-w-2xl mx-auto animate-float"
+                alt="SKYTECH Custom Drone"
+                className="relative z-10 w-full max-w-2xl mx-auto"
                 animate={{ y: [0, -15, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               />
+
+              {/* Floating Labels */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1 }}
+                className="absolute top-1/4 left-0 glass px-3 py-2 rounded-lg"
+              >
+                <span className="text-xs font-medium">เฟรมคาร์บอน</span>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 1.2 }}
+                className="absolute top-1/3 right-0 glass px-3 py-2 rounded-lg"
+              >
+                <span className="text-xs font-medium">กล้อง 8K</span>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.4 }}
+                className="absolute bottom-1/4 left-1/4 glass px-3 py-2 rounded-lg"
+              >
+                <span className="text-xs font-medium">GPS + GLONASS</span>
+              </motion.div>
             </div>
           </motion.div>
         </div>
