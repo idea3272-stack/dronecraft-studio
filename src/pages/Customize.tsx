@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
+import { useDroneImage } from "@/hooks/useDroneImage";
 import { 
   baseDrone, 
   customizationOptions, 
@@ -25,6 +26,7 @@ export default function CustomizePage() {
   
   const [customization, setCustomization] = useState<ExtendedCustomization>(defaultCustomization);
   const [expandedCategory, setExpandedCategory] = useState<CategoryKey | null>("frame");
+  const { imageUrl: aiImageUrl, isLoading: isGeneratingImage, error: imageError } = useDroneImage(customization);
 
   const calculateTotalPrice = () => {
     return baseDrone.basePrice + Object.values(customization).reduce((sum, item) => sum + item.price, 0);
@@ -83,12 +85,32 @@ export default function CustomizePage() {
             className="lg:col-span-1"
           >
             <div className="sticky top-24 space-y-6">
-              <div className="aspect-square rounded-3xl overflow-hidden glass">
+              <div className="aspect-square rounded-3xl overflow-hidden glass relative">
+                {/* AI Generated Image or Default */}
                 <img
-                  src={baseDrone.image}
+                  src={aiImageUrl || baseDrone.image}
                   alt={baseDrone.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-opacity duration-500"
                 />
+                
+                {/* Loading Overlay */}
+                {isGeneratingImage && (
+                  <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span>AI กำลังสร้างภาพโดรน...</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* AI Badge */}
+                {aiImageUrl && !isGeneratingImage && (
+                  <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs flex items-center gap-1">
+                    <Sparkles className="h-3 w-3" />
+                    AI Generated
+                  </div>
+                )}
               </div>
 
               {/* Selected Summary */}
