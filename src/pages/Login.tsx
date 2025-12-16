@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string().email("กรุณากรอกอีเมลให้ถูกต้อง"),
+  password: z.string().min(6, "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร"),
+  name: z.string().min(2, "กรุณากรอกชื่อ-นามสกุล").optional(),
+});
 
 export default function LoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,18 +22,150 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, isLoading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Demo functionality
-    toast({
-      title: isLogin ? "เข้าสู่ระบบสำเร็จ!" : "สมัครสมาชิกสำเร็จ!",
-      description: "ยินดีต้อนรับสู่ SKYTECH",
-    });
-    navigate("/");
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !isLoading) {
+      navigate("/");
+    }
+  }, [user, isLoading, navigate]);
+
+  const validateForm = () => {
+    try {
+      if (isLogin) {
+        authSchema.pick({ email: true, password: true }).parse({ email, password });
+      } else {
+        authSchema.parse({ email, password, name });
+      }
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+      return false;
+    }
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+    
+    setIsSubmitting(true);
+
+    try {
+      if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast({
+              variant: "destructive",
+              title: "เข้าสู่ระบบไม่สำเร็จ",
+              description: "อีเมลหรือรหัสผ่านไม่ถูกต้อง",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "เกิดข้อผิดพลาด",
+              description: error.message,
+            });
+          }
+          return;
+        }
+
+        toast({
+          title: "เข้าสู่ระบบสำเร็จ!",
+          description: "ยินดีต้อนรับสู่ SKYTECH",
+        });
+        navigate("/");
+      } else {
+        const redirectUrl = `${window.location.origin}/`;
+        
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: redirectUrl,
+            data: {
+              full_name: name,
+            },
+          },
+        });
+
+        if (error) {
+          if (error.message.includes("already registered")) {
+            toast({
+              variant: "destructive",
+              title: "สมัครสมาชิกไม่สำเร็จ",
+              description: "อีเมลนี้ถูกใช้งานแล้ว",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "เกิดข้อผิดพลาด",
+              description: error.message,
+            });
+          }
+          return;
+        }
+
+        toast({
+          title: "สมัครสมาชิกสำเร็จ!",
+          description: "ยินดีต้อนรับสู่ SKYTECH",
+        });
+        navigate("/");
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "เกิดข้อผิดพลาด",
+        description: "กรุณาลองใหม่อีกครั้ง",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/`,
+      },
+    });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "เกิดข้อผิดพลาด",
+        description: error.message,
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 grid-pattern">
@@ -90,6 +231,9 @@ export default function LoginPage() {
                   className="mt-1.5 bg-card border-border"
                   required
                 />
+                {errors.name && (
+                  <p className="text-sm text-destructive mt-1">{errors.name}</p>
+                )}
               </div>
             )}
 
@@ -104,6 +248,9 @@ export default function LoginPage() {
                 className="mt-1.5 bg-card border-border"
                 required
               />
+              {errors.email && (
+                <p className="text-sm text-destructive mt-1">{errors.email}</p>
+              )}
             </div>
 
             <div>
@@ -126,18 +273,20 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-sm text-destructive mt-1">{errors.password}</p>
+              )}
             </div>
 
-            {isLogin && (
-              <div className="flex justify-end">
-                <a href="#" className="text-sm text-primary hover:underline">
-                  ลืมรหัสผ่าน?
-                </a>
-              </div>
-            )}
-
-            <Button type="submit" variant="hero" className="w-full" size="lg">
-              {isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
+            <Button type="submit" variant="hero" className="w-full" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  กำลังดำเนินการ...
+                </>
+              ) : (
+                isLogin ? "เข้าสู่ระบบ" : "สมัครสมาชิก"
+              )}
             </Button>
           </form>
 
@@ -153,7 +302,7 @@ export default function LoginPage() {
 
           {/* Social Login */}
           <div className="space-y-3">
-            <Button variant="outline" className="w-full" size="lg">
+            <Button variant="outline" className="w-full" size="lg" onClick={handleGoogleLogin}>
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
