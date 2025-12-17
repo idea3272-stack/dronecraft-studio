@@ -149,7 +149,12 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <Button variant="hero" size="lg" className="w-full">
+                <Button 
+                  variant="hero" 
+                  size="lg" 
+                  className="w-full"
+                  onClick={() => navigate("/checkout")}
+                >
                   ดำเนินการชำระเงิน
                 </Button>
 
