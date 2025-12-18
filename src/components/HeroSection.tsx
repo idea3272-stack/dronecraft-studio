@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Play, Wrench, Cpu, Camera, Battery, Gauge, Shield } from "lucide-react";
+import { ArrowRight, Wrench, Cpu, Camera, Battery } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import heroDrone from "@/assets/hero-drone.jpg";
@@ -67,10 +67,6 @@ export function HeroSection() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button variant="glass" size="xl">
-                <Play className="mr-2 h-5 w-5" />
-                ดูวิดีโอ
-              </Button>
             </div>
 
             {/* Quick Features */}
