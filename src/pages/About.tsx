@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { MapPin, Mail, Phone } from "lucide-react";
+import { MapPin, Mail } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
@@ -99,7 +99,7 @@ export default function AboutPage() {
           >
             ติดต่อเรา
           </motion.h2>
-          <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -108,8 +108,8 @@ export default function AboutPage() {
               <MapPin className="h-8 w-8 text-primary mx-auto mb-3" />
               <h3 className="font-bold mb-2">ที่อยู่</h3>
               <p className="text-sm text-muted-foreground">
-                123 ถนนนวัตกรรม<br />
-                แขวงห้วยขวาง กรุงเทพฯ 10310
+                304 หมู่ 8 ตำบลสามพราน<br />
+                อำเภอสามพราน จังหวัดนครปฐม 73110
               </p>
             </motion.div>
             <motion.div
@@ -118,24 +118,11 @@ export default function AboutPage() {
               transition={{ delay: 0.1 }}
               className="glass rounded-2xl p-6 text-center"
             >
-              <Phone className="h-8 w-8 text-primary mx-auto mb-3" />
-              <h3 className="font-bold mb-2">โทรศัพท์</h3>
-              <p className="text-sm text-muted-foreground">
-                02-xxx-xxxx<br />
-                (จันทร์-ศุกร์ 9:00-18:00)
-              </p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="glass rounded-2xl p-6 text-center"
-            >
               <Mail className="h-8 w-8 text-primary mx-auto mb-3" />
               <h3 className="font-bold mb-2">อีเมล</h3>
               <p className="text-sm text-muted-foreground">
-                info@skytech.co.th<br />
-                support@skytech.co.th
+                04006@sukhon.ac.th<br />
+                03146@sukhon.ac.th
               </p>
             </motion.div>
           </div>
