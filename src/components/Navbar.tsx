@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Menu, X, User, LogOut, Loader2 } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut, Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -108,6 +108,11 @@ export function Navbar() {
                       {user.email}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/orders")}>
+                      <Package className="h-4 w-4 mr-2" />
+                      ประวัติการสั่งซื้อ
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                       <LogOut className="h-4 w-4 mr-2" />
                       ออกจากระบบ
@@ -175,6 +180,16 @@ export function Navbar() {
                         <p className="text-xs text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
+                    <Link
+                      to="/orders"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="block mb-2"
+                    >
+                      <Button variant="ghost" size="sm" className="w-full justify-start">
+                        <Package className="h-4 w-4 mr-2" />
+                        ประวัติการสั่งซื้อ
+                      </Button>
+                    </Link>
                     <Button
                       variant="outline"
                       size="sm"
