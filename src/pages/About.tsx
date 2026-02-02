@@ -3,37 +3,44 @@ import { MapPin, Mail, Sparkles, Users, Zap } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
+import nontakonImg from "@/assets/team/nontakon.png";
+import phirachatImg from "@/assets/team/phirachat.png";
+import krittinImg from "@/assets/team/krittin.png";
+import pannathonImg from "@/assets/team/pannathon.png";
+import thanaImg from "@/assets/team/thana.png";
+import tachaphonImg from "@/assets/team/tachaphon.png";
+
 export default function AboutPage() {
   const team = [
     {
       name: "Nontakon Noinart",
       role: "Developer",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face",
+      image: nontakonImg,
     },
     {
       name: "Pannathon Jamsawang",
       role: "Developer",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face",
+      image: pannathonImg,
     },
     {
       name: "Phirachat Tuamjui",
       role: "Developer",
-      image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop&crop=face",
+      image: phirachatImg,
     },
     {
       name: "Tachaphon Kobthongsirichok",
       role: "Developer",
-      image: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=300&h=300&fit=crop&crop=face",
+      image: tachaphonImg,
     },
     {
       name: "Krittin Thongtem",
       role: "Developer",
-      image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&h=300&fit=crop&crop=face",
+      image: krittinImg,
     },
     {
       name: "Thana Boonchu",
       role: "Developer",
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300&h=300&fit=crop&crop=face",
+      image: thanaImg,
     },
   ];
 
