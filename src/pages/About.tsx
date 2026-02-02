@@ -30,6 +30,11 @@ export default function AboutPage() {
       role: "Developer",
       image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&h=300&fit=crop&crop=face",
     },
+    {
+      name: "Thana Boonchu",
+      role: "Developer",
+      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300&h=300&fit=crop&crop=face",
+    },
   ];
 
   return (
