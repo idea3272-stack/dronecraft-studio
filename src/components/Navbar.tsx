@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Menu, X, User, LogOut, Loader2, Package } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut, Loader2, Package, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +19,7 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { totalItems } = useCart();
   const { user, profile, isLoading, signOut } = useAuth();
+  const { isAdmin } = useUserRole();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -25,6 +27,7 @@ export function Navbar() {
     { name: "หน้าแรก", path: "/" },
     { name: "สร้างโดรน", path: "/customize/skytech-custom" },
     { name: "เกี่ยวกับเรา", path: "/about" },
+    ...(isAdmin ? [{ name: "🛡️ Admin", path: "/admin" }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -112,6 +115,12 @@ export function Navbar() {
                       <Package className="h-4 w-4 mr-2" />
                       ประวัติการสั่งซื้อ
                     </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem onClick={() => navigate("/admin")}>
+                        <Shield className="h-4 w-4 mr-2" />
+                        Admin Panel
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                       <LogOut className="h-4 w-4 mr-2" />

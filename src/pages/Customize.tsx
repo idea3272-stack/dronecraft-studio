@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Loader2, Sparkles } from "lucide-react";
@@ -8,64 +8,79 @@ import { Footer } from "@/components/Footer";
 import { useCart } from "@/context/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { useDroneImage } from "@/hooks/useDroneImage";
-import { 
-  baseDrone, 
-  customizationOptions, 
-  defaultCustomization, 
-  categoryLabels, 
-  categoryIcons,
-  ExtendedCustomization 
-} from "@/data/drones";
-
-type CategoryKey = keyof ExtendedCustomization;
+import { baseDrone } from "@/data/drones";
+import { useCustomizationCategories, useCustomizationOptions, CustomizationOption } from "@/hooks/useCustomizationOptions";
 
 export default function CustomizePage() {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toast } = useToast();
   
-  const [customization, setCustomization] = useState<ExtendedCustomization>(defaultCustomization);
-  const [expandedCategory, setExpandedCategory] = useState<CategoryKey | null>("frame");
-  const { imageUrl: aiImageUrl, isLoading: isGeneratingImage, error: imageError } = useDroneImage(customization);
+  const { data: categories, isLoading: catLoading } = useCustomizationCategories();
+  const { data: allOptions, isLoading: optLoading } = useCustomizationOptions();
+
+  const [customization, setCustomization] = useState<Record<string, CustomizationOption>>({});
+  const [expandedCategory, setExpandedCategory] = useState<string | null>("frame");
+  const [initialized, setInitialized] = useState(false);
+
+  // Initialize defaults once data is loaded
+  useMemo(() => {
+    if (categories && allOptions && !initialized) {
+      const defaults: Record<string, CustomizationOption> = {};
+      categories.forEach((cat) => {
+        const catOpts = allOptions.filter((o) => o.category_id === cat.id);
+        const def = catOpts.find((o) => o.is_default) || catOpts[0];
+        if (def) defaults[cat.id] = def;
+      });
+      setCustomization(defaults);
+      setInitialized(true);
+    }
+  }, [categories, allOptions, initialized]);
+
+  // Build customization object for AI image hook
+  const customizationForImage = useMemo(() => {
+    const result: any = {};
+    Object.entries(customization).forEach(([key, val]) => {
+      result[key] = { id: val.id, name: val.name, price: val.price };
+    });
+    return result;
+  }, [customization]);
+
+  const { imageUrl: aiImageUrl, isLoading: isGeneratingImage } = useDroneImage(customizationForImage);
+
+  if (catLoading || optLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const calculateTotalPrice = () => {
     return baseDrone.basePrice + Object.values(customization).reduce((sum, item) => sum + item.price, 0);
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("th-TH").format(price);
-  };
+  const formatPrice = (price: number) => new Intl.NumberFormat("th-TH").format(price);
 
   const handleAddToCart = () => {
     addToCart(baseDrone, customization as any);
-    toast({
-      title: "เพิ่มสินค้าแล้ว!",
-      description: "SKYTECH Custom ถูกเพิ่มลงในตะกร้าสินค้า",
-    });
+    toast({ title: "เพิ่มสินค้าแล้ว!", description: "SKYTECH Custom ถูกเพิ่มลงในตะกร้าสินค้า" });
   };
 
-  const toggleCategory = (category: CategoryKey) => {
-    setExpandedCategory(expandedCategory === category ? null : category);
+  const toggleCategory = (catId: string) => {
+    setExpandedCategory(expandedCategory === catId ? null : catId);
   };
-
-  const categories = Object.keys(customizationOptions) as CategoryKey[];
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <main className="container mx-auto px-4 pt-24 pb-12">
-        {/* Header */}
         <Button variant="ghost" onClick={() => navigate("/")} className="mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" />
           กลับ
         </Button>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
           <span className="inline-block mb-4 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10">
             <span className="text-sm text-primary font-medium">🛠️ Build Your Own Drone</span>
           </span>
@@ -79,21 +94,10 @@ export default function CustomizePage() {
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left - Drone Preview */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-1"
-          >
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-1">
             <div className="sticky top-24 space-y-6">
               <div className="aspect-square rounded-3xl overflow-hidden glass relative">
-                {/* AI Generated Image or Default */}
-                <img
-                  src={aiImageUrl || baseDrone.image}
-                  alt={baseDrone.name}
-                  className="w-full h-full object-cover transition-opacity duration-500"
-                />
-                
-                {/* Loading Overlay */}
+                <img src={aiImageUrl || baseDrone.image} alt={baseDrone.name} className="w-full h-full object-cover transition-opacity duration-500" />
                 {isGeneratingImage && (
                   <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -103,8 +107,6 @@ export default function CustomizePage() {
                     </div>
                   </div>
                 )}
-                
-                {/* AI Badge */}
                 {aiImageUrl && !isGeneratingImage && (
                   <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-primary/90 text-primary-foreground text-xs flex items-center gap-1">
                     <Sparkles className="h-3 w-3" />
@@ -113,17 +115,16 @@ export default function CustomizePage() {
                 )}
               </div>
 
-              {/* Selected Summary */}
               <div className="p-4 rounded-2xl glass">
                 <h3 className="font-display font-bold mb-3 text-sm">สรุปการเลือก</h3>
                 <div className="space-y-1.5 text-xs max-h-48 overflow-y-auto">
-                  {categories.map((cat) => (
-                    <div key={cat} className="flex justify-between items-center">
+                  {categories?.map((cat) => (
+                    <div key={cat.id} className="flex justify-between items-center">
                       <span className="text-muted-foreground truncate mr-2">
-                        {categoryIcons[cat]} {categoryLabels[cat]}
+                        {cat.icon} {cat.label}
                       </span>
                       <span className="text-foreground truncate text-right flex-1">
-                        {customization[cat].name.split('(')[0].trim()}
+                        {customization[cat.id]?.name.split("(")[0].trim() || "-"}
                       </span>
                     </div>
                   ))}
@@ -133,98 +134,55 @@ export default function CustomizePage() {
           </motion.div>
 
           {/* Right - Customization Options */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-2 space-y-3"
-          >
-            {categories.map((category, index) => {
-              const options = customizationOptions[category];
-              const selected = customization[category];
-              const isExpanded = expandedCategory === category;
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-2 space-y-3">
+            {categories?.map((category, index) => {
+              const options = allOptions?.filter((o) => o.category_id === category.id) || [];
+              const selected = customization[category.id];
+              const isExpanded = expandedCategory === category.id;
 
               return (
-                <motion.div
-                  key={category}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="glass rounded-2xl overflow-hidden"
-                >
-                  {/* Category Header */}
-                  <button
-                    onClick={() => toggleCategory(category)}
-                    className="w-full p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors"
-                  >
+                <motion.div key={category.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }} className="glass rounded-2xl overflow-hidden">
+                  <button onClick={() => toggleCategory(category.id)} className="w-full p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl">{categoryIcons[category]}</span>
+                      <span className="text-xl">{category.icon}</span>
                       <div className="text-left">
-                        <h3 className="font-display font-bold">{categoryLabels[category]}</h3>
-                        <p className="text-sm text-muted-foreground">{selected.name}</p>
+                        <h3 className="font-display font-bold">{category.label}</h3>
+                        <p className="text-sm text-muted-foreground">{selected?.name || "-"}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      {selected.price > 0 && (
-                        <span className="text-sm text-primary font-medium">
-                          +฿{formatPrice(selected.price)}
-                        </span>
+                      {selected && selected.price > 0 && (
+                        <span className="text-sm text-primary font-medium">+฿{formatPrice(selected.price)}</span>
                       )}
-                      {isExpanded ? (
-                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                      )}
+                      {isExpanded ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
                     </div>
                   </button>
 
-                  {/* Options */}
                   <AnimatePresence>
                     {isExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="border-t border-border"
-                      >
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="border-t border-border">
                         <div className="p-4 space-y-2">
                           {options.map((option) => (
                             <button
                               key={option.id}
-                              onClick={() => setCustomization({ ...customization, [category]: option })}
+                              onClick={() => setCustomization({ ...customization, [category.id]: option })}
                               className={`w-full p-3 rounded-xl border transition-all text-left flex items-start gap-3 ${
-                                selected.id === option.id
-                                  ? "border-primary bg-primary/10"
-                                  : "border-border hover:border-primary/50 bg-card/50"
+                                selected?.id === option.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/50 bg-card/50"
                               }`}
                             >
-                              <div
-                                className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                                  selected.id === option.id
-                                    ? "border-primary bg-primary"
-                                    : "border-muted-foreground"
-                                }`}
-                              >
-                                {selected.id === option.id && (
-                                  <Check className="h-3 w-3 text-primary-foreground" />
-                                )}
+                              <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                selected?.id === option.id ? "border-primary bg-primary" : "border-muted-foreground"
+                              }`}>
+                                {selected?.id === option.id && <Check className="h-3 w-3 text-primary-foreground" />}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2">
                                   <span className="font-medium text-sm">{option.name}</span>
-                                  <span
-                                    className={`text-sm flex-shrink-0 ${
-                                      option.price > 0 ? "text-primary" : "text-muted-foreground"
-                                    }`}
-                                  >
+                                  <span className={`text-sm flex-shrink-0 ${option.price > 0 ? "text-primary" : "text-muted-foreground"}`}>
                                     {option.price > 0 ? `+฿${formatPrice(option.price)}` : "รวมในราคา"}
                                   </span>
                                 </div>
-                                {option.description && (
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {option.description}
-                                  </p>
-                                )}
+                                {option.description && <p className="text-xs text-muted-foreground mt-1">{option.description}</p>}
                               </div>
                             </button>
                           ))}
@@ -239,18 +197,12 @@ export default function CustomizePage() {
         </div>
 
         {/* Sticky Price Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-0 left-0 right-0 glass border-t border-border z-40"
-        >
+        <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="fixed bottom-0 left-0 right-0 glass border-t border-border z-40">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <span className="text-sm text-muted-foreground">ราคารวมทั้งหมด</span>
-                <p className="font-display text-2xl md:text-3xl font-bold text-primary">
-                  ฿{formatPrice(calculateTotalPrice())}
-                </p>
+                <p className="font-display text-2xl md:text-3xl font-bold text-primary">฿{formatPrice(calculateTotalPrice())}</p>
               </div>
               <Button variant="hero" size="lg" onClick={handleAddToCart} className="flex-shrink-0">
                 <ShoppingCart className="h-5 w-5 mr-2" />
@@ -260,10 +212,8 @@ export default function CustomizePage() {
           </div>
         </motion.div>
 
-        {/* Spacer for sticky bar */}
         <div className="h-24" />
       </main>
-
       <Footer />
     </div>
   );
