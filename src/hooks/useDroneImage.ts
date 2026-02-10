@@ -39,13 +39,23 @@ export function useDroneImage(customization: ExtendedCustomization) {
         });
 
         if (fnError) {
+          // Silently fail for payment/rate limit errors - just use default image
+          if (fnError.message?.includes("402") || fnError.message?.includes("429")) {
+            console.warn("AI image generation unavailable:", fnError.message);
+            return;
+          }
           throw new Error(fnError.message);
         }
 
-        if (data?.imageUrl) {
-          setImageUrl(data.imageUrl);
-        } else if (data?.error) {
+        if (data?.error) {
+          // Silently handle payment/rate limit errors
+          if (data.error === "Payment required" || data.error === "Rate limited, please try again later.") {
+            console.warn("AI image generation unavailable:", data.error);
+            return;
+          }
           setError(data.error);
+        } else if (data?.imageUrl) {
+          setImageUrl(data.imageUrl);
         }
       } catch (err) {
         console.error("Failed to generate drone image:", err);
