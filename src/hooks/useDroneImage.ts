@@ -58,8 +58,14 @@ export function useDroneImage(customization: ExtendedCustomization) {
           setImageUrl(data.imageUrl);
         }
       } catch (err) {
-        console.error("Failed to generate drone image:", err);
-        setError(err instanceof Error ? err.message : "Failed to generate image");
+        const msg = err instanceof Error ? err.message : String(err);
+        // Silently handle credit/rate limit errors - just use default image
+        if (msg.includes("non-2xx") || msg.includes("402") || msg.includes("429")) {
+          console.warn("AI image generation unavailable, using default image");
+        } else {
+          console.error("Failed to generate drone image:", err);
+          setError(msg);
+        }
       } finally {
         setIsLoading(false);
       }
