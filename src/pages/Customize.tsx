@@ -46,7 +46,7 @@ export default function CustomizePage() {
     return result;
   }, [customization]);
 
-  const { imageUrl: aiImageUrl, isLoading: isGeneratingImage } = useDroneImage(customizationForImage);
+  const { imageUrl: aiImageUrl, isLoading: isGeneratingImage, error: aiError, generateImage } = useDroneImage();
 
   if (catLoading || optLoading) {
     return (
@@ -114,6 +114,17 @@ export default function CustomizePage() {
                   </div>
                 )}
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-3"
+                onClick={() => generateImage(customizationForImage)}
+                disabled={isGeneratingImage}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                {isGeneratingImage ? "กำลังสร้าง..." : "สร้างภาพด้วย AI"}
+              </Button>
+              {aiError && <p className="text-xs text-destructive mt-1 text-center">{aiError}</p>}
 
               <div className="p-4 rounded-2xl glass">
                 <h3 className="font-display font-bold mb-3 text-sm">สรุปการเลือก</h3>
