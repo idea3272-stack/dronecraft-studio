@@ -1,24 +1,19 @@
 import { useState, useEffect, useRef } from "react";
-import { ExtendedCustomization } from "@/data/drones";
 import { supabase } from "@/integrations/supabase/client";
 
-export function useDroneImage(customization: ExtendedCustomization) {
+export function useDroneImage(customization: Record<string, any>) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [disabled, setDisabled] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const lastCustomizationRef = useRef<string>("");
 
   useEffect(() => {
-    const customizationKey = JSON.stringify({
-      frame: customization.frame?.id,
-      camera: customization.camera?.id,
-      propeller: customization.propeller?.id,
-      lights: customization.lights?.id,
-      gimbal: customization.gimbal?.id,
-    });
+    if (disabled) return;
 
-    // Don't regenerate if the relevant customization hasn't changed
+    const customizationKey = JSON.stringify(customization);
+
     if (customizationKey === lastCustomizationRef.current) {
       return;
     }
@@ -59,9 +54,9 @@ export function useDroneImage(customization: ExtendedCustomization) {
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        // Silently handle credit/rate limit errors - just use default image
-        if (msg.includes("non-2xx") || msg.includes("402") || msg.includes("429")) {
-          console.warn("AI image generation unavailable, using default image");
+        if (msg.includes("non-2xx") || msg.includes("402") || msg.includes("429") || msg.includes("Payment")) {
+          console.warn("AI image generation unavailable, disabling for this session");
+          setDisabled(true);
         } else {
           console.error("Failed to generate drone image:", err);
           setError(msg);
